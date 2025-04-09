@@ -1,0 +1,179 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Drill Identifying Verses</title>
+    <style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+  font-size: 24px;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+input[type="number"] {
+  width: 50px;
+  padding: 5px;
+  font-size: 24px;
+  margin: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+h1 {
+  font-size: 36px;
+  color: #333;
+  text-align: center;
+}
+
+div {
+  background-color: #fff;
+  padding: 20px;
+  
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+span {
+  display: inline;
+  margin: 10px 0;
+  font-size: 24px;
+  color: #555;
+}
+
+b {
+  font-weight: bold;
+  color: #333;
+}
+
+u {
+  text-decoration: underline;
+  font-weight: bold;
+  color: #000;
+}
+    </style>
+  </head>
+  <body>
+    <h1>Bible Drill Identifying Verses</h1>
+    <div>
+      There are <span id="valid-verses">10</span> verses remaining before reset.<br>
+
+      <button id="get-verse">Get Verse</button>
+      <button id="reset">Reset</button><br>
+
+      <label for="minimumLength">Minimum Length</label>
+      <input type="number" id="minimumLength" min="1" max="9" value="3"><br>
+
+      <label for="maximumLength">Maximum Length</label>
+      <input type="number" id="maximumLength" min="1" max="9" value="7"><br>
+
+      <b>Current Verse:</b><br>
+      <span id="reference">[REFERENCE]</span><br>
+      <span id="fragment">[FRAGMENT]</span> - <span id="full-verse">[FULL VERSE]</span>
+    </div>
+    <script>
+const VERSES = [
+  ["Job 19:25", "I know that my redeemer lives and that in the end he will stand on the earth"],
+  ["Psalm 139:14", "I praise you because I am fearfully and wonderfully made your works are wonderful I know that full well"],
+  ["Isaiah 40:31", "But those who hope in the LORD will renew their strength they will soar on wings like eagles they will run and not grow weary they will walk and not be faint"],
+  ["Luke 9:23", "Then he said to them all whoever wants to be my disciple must deny themselves and take up their cross daily and follow me"],
+  ["Acts 20:32", "Now I commit you to God and to the word of his grace which can build you up and give you an inheritance among all those who are sanctified"],
+  ["Romans 6:23", "For the wages of sin is death but the gift of God is eternal life in Christ Jesus our Lord"],
+  ["Phillipians: 1:27", "Whatever happens conduct yourselves in a manner worthy of the gospel of Christ then whether I come and see you or only hear about you in my absence I will know that you stand firm in the one Spirit striving together as one for the faith of the gospel"],
+  ["Colossians 2:8", "See to it that no one takes you captive through hollow and deceptive philosophy which depends on human tradition and the elemental spiritual forces of this world rather than on Christ"],
+  ["Hebrews 11:6", "And without faith it is impossible to please God because anyone who comes to him must believe that he exists and that he rewards those who earnestly seek him"],
+  ["Revelation 1:8", "I am the Alpha and the Omega says the Lord God who is and who was and who is to come the Almighty"]
+];
+
+var minimumLength = 3;
+var maximumLength = 7;
+var validVerses = VERSES.slice();
+
+function getRandomFragment(minimumLength, maximumLength, validVerses=VERSES) {
+  let verseIdx = Math.floor(Math.random() * validVerses.length);
+  let verse = validVerses[verseIdx][1].split(" ");
+  let selectedLength = Math.floor(Math.random() * (maximumLength - minimumLength + 1)) + minimumLength;
+  let validIndices = [];
+  for (let i=0; i<verse.length - selectedLength + 1; i++) {
+    let fragment = verse.slice(i, i + selectedLength).join(" ");
+    let valid = true;
+
+    for (let j=0; j<validVerses.length; j++) {
+      if (j === verseIdx) continue;
+      if (validVerses[j][1].toLocaleLowerCase().includes(fragment.toLocaleLowerCase())) {
+        valid = false;
+        break;
+      }
+    }
+
+    if (valid) validIndices.push(i);
+  }
+
+  if (validIndices.length === 0) return getRandomFragment(selectedLength+1, Math.max(maximumLength, selectedLength+1));
+
+  let selectedIndex = validIndices[Math.floor(Math.random() * validIndices.length)];
+  let fragment = verse.slice(selectedIndex, selectedIndex + selectedLength).join(" ");
+
+  return {
+    reference: validVerses[verseIdx][0],
+    fragment: fragment,
+    fullVerse: validVerses[verseIdx][1],
+    index: verseIdx
+  };
+}
+
+function reset() {
+  validVerses = VERSES.slice();
+  document.getElementById("valid-verses").innerText = validVerses.length;
+}
+
+function selectVerse() {
+  if (validVerses.length === 0) {
+    reset();
+  }
+
+  let fragment = getRandomFragment(minimumLength, maximumLength, validVerses);
+  let reference = fragment.reference;
+  let fullVerse = fragment.fullVerse;
+  let fragmentText = fragment.fragment;
+  let index = fragment.index;
+  validVerses.splice(index, 1);
+
+  if (validVerses.length === 0) reset();
+
+  document.getElementById("reference").innerText = reference;
+  document.getElementById("fragment").innerHTML = "<i>" + fragmentText + "</i>";
+  document.getElementById("full-verse").innerHTML = fullVerse.split(fragmentText).join("<u>" + fragmentText + "</u>");
+  document.getElementById("valid-verses").innerText = validVerses.length;
+}
+
+document.getElementById("get-verse").addEventListener("click", selectVerse);
+document.getElementById("reset").addEventListener("click", () => {
+  reset();
+  selectVerse();
+});
+document.getElementById("minimumLength").addEventListener("input", function() {
+  minimumLength = parseInt(this.value);
+});
+document.getElementById("maximumLength").addEventListener("input", function() {
+  maximumLength = parseInt(this.value);
+});
+
+reset();
+selectVerse();
+    </script>
+  </body>
+</html>
